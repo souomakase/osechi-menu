@@ -21,20 +21,20 @@ button.main{background:#222;color:#fff;width:100%}
 #info{margin:0 0 8px;font-size:12px;color:#555}
 #info.warn{color:#b00020;font-weight:700}
 .sheet{width:210mm;background:#fff;position:relative;box-shadow:0 1px 5px #0003}
-.face{position:relative;width:210mm;height:105mm;padding:8mm 10mm;font-family:var(--serif);color:#000;overflow:hidden}
-.c{display:flex;flex-direction:row-reverse;justify-content:space-between;height:100%;gap:calc(var(--fs)*1.6)}
+.face{position:relative;width:210mm;height:105mm;padding:var(--pv,8mm) var(--ph,10mm);font-family:var(--serif);color:#000;overflow:hidden}
+.c{display:flex;flex-direction:row-reverse;justify-content:space-between;height:100%;gap:calc(var(--fs)*1.6*var(--gm,1))}
 .c>*{flex:none}
 .t,.h,.msg,.sig,.note,.cell{writing-mode:vertical-rl;line-break:strict}
 .t{align-self:flex-start;font-size:calc(var(--fs)*1.05);line-height:1.8;letter-spacing:.08em}
 .h{align-self:flex-start;font-size:calc(var(--fs)*.85);margin-top:calc(var(--fs)*3);line-height:1.8;letter-spacing:.2em}
-.dishes{display:flex;flex-direction:row-reverse;height:100%;gap:calc(var(--fs)*.3)}
+.dishes{display:flex;flex-direction:row-reverse;height:100%;gap:calc(var(--fs)*.3*var(--gm,1))}
 .col{display:flex;flex-direction:column;height:100%}
 .cell{height:50%;white-space:nowrap;font-size:var(--fs);line-height:1.75}
 .bl .cell.d::before{content:"・"}
-.msg{height:100%;font-size:calc(var(--fs)*.72);line-height:2}
+.msg{height:100%;font-size:calc(var(--fs)*var(--mr,.72));line-height:2}
 .msg p,.note p{margin:0}
 .sig{align-self:flex-end;font-size:calc(var(--fs)*.78);line-height:2}
-.note{height:100%;font-size:calc(var(--fs)*.52);line-height:1.9}
+.note{height:100%;font-size:calc(var(--fs)*var(--nr,.52));line-height:1.9}
 .guide .face+.face::before,.guide .face+.face::after{content:"";position:absolute;top:0;width:4mm;border-top:.2mm solid #000}
 .guide .face+.face::before{left:0}
 .guide .face+.face::after{right:0}
@@ -64,6 +64,23 @@ button.main{background:#222;color:#fff;width:100%}
  <select id="mode"><option value="2">21×21cm 正方形に2面（半分に切る）</option><option value="1">21×10.5cm 1面のみ</option></select>
  <label class="chk"><input type="checkbox" id="bl"> 料理名の前に「・」を付ける</label>
  <label class="chk"><input type="checkbox" id="guide"> 切り取りの目印を入れる</label>
+ <details style="margin-top:12px;border-top:1px solid #ddd;padding-top:8px" open>
+  <summary style="cursor:pointer;font-weight:700">文字の大きさ・余白の調整（詳細設定）</summary>
+  <label>調整の方法</label>
+  <select id="fix"><option value="auto">用紙優先：収まるよう文字を自動で小さくする</option><option value="fixed">文字優先：指定した大きさで固定する</option></select>
+  <label>料理名の文字サイズ（自動のときは最大の大きさ）<span class="v" id="o_fsmax"></span></label>
+  <input type="range" id="fsmax" min="2.8" max="5.5" step="0.1">
+  <label>上下の余白<span class="v" id="o_padv"></span></label>
+  <input type="range" id="padv" min="4" max="14" step="0.5">
+  <label>左右の余白<span class="v" id="o_padh"></span></label>
+  <input type="range" id="padh" min="4" max="20" step="0.5">
+  <label>列の間隔<span class="v" id="o_gapm"></span></label>
+  <input type="range" id="gapm" min="60" max="160" step="5">
+  <label>メッセージの大きさ（料理名に対する割合）<span class="v" id="o_msgr"></span></label>
+  <input type="range" id="msgr" min="55" max="100" step="1">
+  <label>注意書きの大きさ（料理名に対する割合）<span class="v" id="o_notr"></span></label>
+  <input type="range" id="notr" min="40" max="80" step="1">
+ </details>
  <button class="main" id="print">PDFとして保存</button>
  <p style="font-size:12px;color:#555;margin:6px 0 0">押すと印刷画面が開きます。送信先を「PDFに保存」、余白を「なし」、倍率を100%にしてください（Chrome・Edge推奨）。</p>
  <button id="reset">基本設定に戻す</button>
@@ -80,7 +97,8 @@ const DEF={
  msg:"謹んで新年のお慶びを申し上げます。\n新たな年の門出に、皆様のご健康とご多幸を心よりお祈り申し上げます。\n新春の食卓に、一品一品心を込めてお詰め合わせいたしました。\n大切な方々と過ごすひとときが、穏やかで心豊かなものとなりますように。\n本年が皆様にとりまして、健やかで実り多き一年となりますことを、心よりお祈り申し上げます。",
  note:"おせちは冷蔵にて保存のうえ、お受け取り後2日以内を目安に、できるだけお早めにお召し上がりください。",
  role:"",name:"〇〇",era:"令和",year:String(new Date().getFullYear()+1-2018),day:"元日",
- mode:"2",bl:true,guide:false
+ mode:"2",bl:true,guide:false,
+ fix:"auto",fsmax:"4.6",padv:"8",padh:"10",gapm:"100",msgr:"72",notr:"52"
 };
 const IDS=Object.keys(DEF), $=id=>document.getElementById(id);
 const kn=n=>{if(n==1)return"元";const d="〇一二三四五六七八九",t=Math.floor(n/10),o=n%10;return(t>1?d[t]:"")+(t?"十":"")+(o?d[o]:"")};
@@ -122,15 +140,19 @@ function render(){
  s.className="sheet"+(v.bl?" bl":"")+(v.guide?" guide":"");
  const f=face(v);s.innerHTML=v.mode==="2"?f+f:f;
  $("pg").textContent=`@page{size:210mm ${v.mode==="2"?210:105}mm;margin:0}`;
- const c=s.querySelector(".c");let fs=4.6,ok=false;
- for(;fs>=2.8;fs=Math.round((fs-0.1)*10)/10){
+ s.style.setProperty("--pv",v.padv+"mm");s.style.setProperty("--ph",v.padh+"mm");
+ s.style.setProperty("--gm",v.gapm/100);s.style.setProperty("--mr",v.msgr/100);s.style.setProperty("--nr",v.notr/100);
+ ["fsmax","padv","padh","gapm","msgr","notr"].forEach(k=>{$("o_"+k).textContent="　"+v[k]+(/m$|r$/.test(k)&&k!=="padv"&&k!=="padh"?"%":"mm")});
+ const c=s.querySelector(".c"),fixed=v.fix==="fixed";let fs=parseFloat(v.fsmax),ok=false;
+ if(fixed){s.style.setProperty("--fs",fs+"mm");ok=fits(c)}
+ else for(;fs>=2.8;fs=Math.round((fs-0.1)*10)/10){
   s.style.setProperty("--fs",fs+"mm");
   if(fits(c)){ok=true;break}
  }
  const info=$("info");
  info.className=ok?"":"warn";
- info.textContent=ok?`料理名の文字サイズ：${fs.toFixed(1)}mm（約${(fs/0.3528).toFixed(1)}pt）で自動調整`
-  :"収まりません。料理数・文章を減らすか、文字サイズの下限を見直す必要があります。";
+ info.textContent=ok?`料理名の文字サイズ：${fs.toFixed(1)}mm（約${(fs/0.3528).toFixed(1)}pt）${fixed?"で固定":"で自動調整"}`
+  :(fixed?"収まりません。文字サイズを小さくするか、余白・列の間隔を狭めてください。":"収まりません。余白や列の間隔を狭めるか、文章を減らしてください。");
 }
 IDS.forEach(k=>$(k).addEventListener("input",render));
 $("print").onclick=()=>{
