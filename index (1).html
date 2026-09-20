@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>おせちお品書き（試作 Template B）</title>
+<style>
+:root{--serif:"Noto Serif JP","Shippori Mincho","Yu Mincho","Hiragino Mincho ProN","MS PMincho",serif}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;background:#e9e7e2;color:#222;font:14px/1.6 "Hiragino Sans","Yu Gothic",system-ui,sans-serif}
+.panel{width:340px;background:#fff;padding:14px 16px 18px;border-radius:6px}
+.panel h1{font-size:16px;margin:0 0 4px}
+.panel label{display:block;margin-top:10px;font-size:12px;font-weight:700}
+.panel input[type=text],.panel textarea,.panel select{width:100%;font:inherit;padding:5px;border:1px solid #bbb;border-radius:3px}
+.panel textarea{height:110px}
+.panel .chk{display:flex;gap:6px;align-items:center;font-weight:400;margin-top:8px}
+.row{display:flex;gap:6px}
+button{font:inherit;padding:8px 12px;margin-top:12px;border:1px solid #333;background:#fff;border-radius:3px;cursor:pointer}
+button.main{background:#222;color:#fff;width:100%}
+.view{flex:1;min-width:0;overflow-x:auto}
+#info{margin:0 0 8px;font-size:12px;color:#555}
+#info.warn{color:#b00020;font-weight:700}
+.sheet{width:210mm;background:#fff;position:relative;box-shadow:0 1px 5px #0003}
+.face{position:relative;width:210mm;height:105mm;padding:8mm 10mm;font-family:var(--serif);color:#000;overflow:hidden}
+.c{display:flex;flex-direction:row-reverse;justify-content:space-between;height:100%;gap:calc(var(--fs)*1.6)}
+.c>*{flex:none}
+.t,.h,.msg,.sig,.note,.cell{writing-mode:vertical-rl;line-break:strict}
+.t{align-self:flex-start;font-size:calc(var(--fs)*1.05);line-height:1.8;letter-spacing:.08em}
+.h{align-self:flex-start;font-size:calc(var(--fs)*.85);margin-top:calc(var(--fs)*3);line-height:1.8;letter-spacing:.2em}
+.dishes{display:flex;flex-direction:row-reverse;height:100%;gap:calc(var(--fs)*.3)}
+.col{display:flex;flex-direction:column;height:100%}
+.cell{height:50%;white-space:nowrap;font-size:var(--fs);line-height:1.75}
+.bl .cell.d::before{content:"・"}
+.msg{height:100%;font-size:calc(var(--fs)*.72);line-height:2}
+.msg p,.note p{margin:0}
+.sig{align-self:flex-end;font-size:calc(var(--fs)*.78);line-height:2}
+.note{height:100%;font-size:calc(var(--fs)*.52);line-height:1.9}
+.guide .face+.face::before,.guide .face+.face::after{content:"";position:absolute;top:0;width:4mm;border-top:.2mm solid #000}
+.guide .face+.face::before{left:0}
+.guide .face+.face::after{right:0}
+@media print{
+ body{display:block;padding:0;background:none}
+ .panel,#info{display:none}
+ .view{overflow:visible}
+ .sheet{box-shadow:none}
+}
+</style>
+<style id="pg"></style>
+</head>
+<body>
+<div class="panel">
+ <h1>おせちお品書き（試作）</h1>
+ <label>店名</label><input type="text" id="shop">
+ <label>商品名</label><input type="text" id="prod">
+ <label>お品書き（1行に1品。上下2品ずつ、右の列から並びます）</label><textarea id="dishes"></textarea>
+ <label>その他のお品</label><input type="text" id="other">
+ <label>メッセージ（1行が1つの文のまとまり）</label><textarea id="msg"></textarea>
+ <label>注意書き</label><textarea id="note" style="height:70px"></textarea>
+ <label>署名（役職・氏名）</label>
+ <div class="row"><input type="text" id="role" placeholder="役職（空欄可）"><input type="text" id="name"></div>
+ <label>日付（元号・年・日付）</label>
+ <div class="row"><input type="text" id="era"><select id="year"></select><input type="text" id="day"></div>
+ <label>出力する用紙</label>
+ <select id="mode"><option value="2">21×21cm 正方形に2面（半分に切る）</option><option value="1">21×10.5cm 1面のみ</option></select>
+ <label class="chk"><input type="checkbox" id="bl"> 料理名の前に「・」を付ける</label>
+ <label class="chk"><input type="checkbox" id="guide"> 切り取りの目印を入れる</label>
+ <button class="main" id="print">PDFとして保存</button>
+ <p style="font-size:12px;color:#555;margin:6px 0 0">押すと印刷画面が開きます。送信先を「PDFに保存」、余白を「なし」、倍率を100%にしてください（Chrome・Edge推奨）。</p>
+ <button id="reset">基本設定に戻す</button>
+</div>
+<div class="view">
+ <p id="info"></p>
+ <div class="sheet" id="sheet"></div>
+</div>
+<script>
+const DEF={
+ shop:"創",prod:"特製おせち　二段重",
+ dishes:["煮鮑","羽子板かまぼこ","海老の養老煮","金柑さわやか煮","銀鱈西京焼き","紅白長老貴","カレイ西京焼き","穂付筍","栗きんとん","紅白花餅","いくら醤油漬け","梅人参","数の子醤油漬け","紅白かまぼこ","伊達巻","黒豆蜜煮","にしん昆布巻き","紅白なます","合鴨ロース","花蓮根","松前数の子","和牛ビーフシチュー","田作り"].join("\n"),
+ other:"ほか数種とちらし寿司",
+ msg:"謹んで新年のお慶びを申し上げます。\n新たな年の門出に、皆様のご健康とご多幸を心よりお祈り申し上げます。\n新春の食卓に、一品一品心を込めてお詰め合わせいたしました。\n大切な方々と過ごすひとときが、穏やかで心豊かなものとなりますように。\n本年が皆様にとりまして、健やかで実り多き一年となりますことを、心よりお祈り申し上げます。",
+ note:"おせちは冷蔵にて保存のうえ、お受け取り後2日以内を目安に、できるだけお早めにお召し上がりください。",
+ role:"",name:"〇〇",era:"令和",year:String(new Date().getFullYear()+1-2018),day:"元日",
+ mode:"2",bl:true,guide:false
+};
+const IDS=Object.keys(DEF), $=id=>document.getElementById(id);
+const kn=n=>{if(n==1)return"元";const d="〇一二三四五六七八九",t=Math.floor(n/10),o=n%10;return(t>1?d[t]:"")+(t?"十":"")+(o?d[o]:"")};
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const lines=s=>s.split("\n").map(x=>x.trim()).filter(Boolean);
+for(let n=1;n<=40;n++)$("year").add(new Option(kn(n),n));
+
+function load(){
+ let v={};try{v=JSON.parse(localStorage.getItem("osechi")||"{}")}catch(e){}
+ IDS.forEach(k=>{const x=k in v?v[k]:DEF[k],e=$(k);typeof x==="boolean"?e.checked=x:e.value=x});
+}
+function get(){const v={};IDS.forEach(k=>{const e=$(k);v[k]=e.type==="checkbox"?e.checked:e.value});return v}
+function face(v){
+ const items=lines(v.dishes).map(x=>x.replace(/^[・･•●]\s*/,"")).map(x=>({t:x,d:1}));
+ if(v.other.trim())items.push({t:v.other.trim(),d:0});
+ let cols="";
+ for(let i=0;i<items.length;i+=2){
+  const cell=o=>o?`<div class="cell${o.d?" d":""}">${esc(o.t)}</div>`:`<div class="cell"></div>`;
+  cols+=`<div class="col">${cell(items[i])}${cell(items[i+1])}</div>`;
+ }
+ const sig=[v.shop,v.role,v.name].map(x=>x.trim()).filter(Boolean).join("　");
+ const date=`${v.era}${kn(+v.year)}年　${v.day}`;
+ const ps=a=>lines(a).map(x=>`<p>${esc(x)}</p>`).join("");
+ return `<div class="face"><div class="c">`+
+  `<div class="t">${esc(v.shop)}　${esc(v.prod)}</div><div class="t h">おしながき</div>`+
+  `<div class="dishes">${cols}</div><div class="msg">${ps(v.msg)}</div>`+
+  `<div class="sig">${esc(sig)}</div><div class="sig">${esc(date)}</div>`+
+  (v.note.trim()?`<div class="note">※${ps(v.note)}</div>`:"")+`</div></div>`;
+}
+function fits(c){
+ const L=c.getBoundingClientRect().left-0.5;
+ return c.lastElementChild.getBoundingClientRect().left>=L &&
+  [...c.querySelectorAll(".cell")].every(e=>e.scrollHeight<=e.clientHeight+1);
+}
+function render(){
+ const v=get();
+ try{localStorage.setItem("osechi",JSON.stringify(v))}catch(e){}
+ const s=$("sheet");
+ s.className="sheet"+(v.bl?" bl":"")+(v.guide?" guide":"");
+ const f=face(v);s.innerHTML=v.mode==="2"?f+f:f;
+ $("pg").textContent=`@page{size:210mm ${v.mode==="2"?210:105}mm;margin:0}`;
+ const c=s.querySelector(".c");let fs=4.6,ok=false;
+ for(;fs>=2.8;fs=Math.round((fs-0.1)*10)/10){
+  s.style.setProperty("--fs",fs+"mm");
+  if(fits(c)){ok=true;break}
+ }
+ const info=$("info");
+ info.className=ok?"":"warn";
+ info.textContent=ok?`料理名の文字サイズ：${fs.toFixed(1)}mm（約${(fs/0.3528).toFixed(1)}pt）で自動調整`
+  :"収まりません。料理数・文章を減らすか、文字サイズの下限を見直す必要があります。";
+}
+IDS.forEach(k=>$(k).addEventListener("input",render));
+$("print").onclick=()=>{
+ const t=document.title;document.title=`おせちお品書き_${$("era").value}${kn(+$("year").value)}年`;
+ window.print();document.title=t;
+};
+$("reset").onclick=()=>{if(confirm("入力内容をすべて基本設定に戻します。よろしいですか？")){localStorage.removeItem("osechi");load();render()}};
+load();render();
+</script>
+</body>
+</html>
