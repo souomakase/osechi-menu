@@ -8,7 +8,7 @@
 :root{--serif:"Noto Serif JP","Shippori Mincho","Yu Mincho","Hiragino Mincho ProN","MS PMincho",serif}
 *{box-sizing:border-box}
 body{margin:0;padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;background:#e9e7e2;color:#222;font:14px/1.6 "Hiragino Sans","Yu Gothic",system-ui,sans-serif}
-.panel{width:340px;flex:none;max-height:calc(100vh - 32px);overflow-y:auto;background:#fff;padding:14px 16px 18px;border-radius:6px}
+.panel{width:340px;flex:none;background:#fff;padding:14px 16px 18px;border-radius:6px}
 .panel h1{font-size:16px;margin:0 0 4px}
 .panel label{display:block;margin-top:10px;font-size:12px;font-weight:700}
 .panel input[type=text],.panel textarea,.panel select{width:100%;font:inherit;padding:5px;border:1px solid #bbb;border-radius:3px}
@@ -17,7 +17,10 @@ body{margin:0;padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex
 .row{display:flex;gap:6px}
 button{font:inherit;padding:8px 12px;margin-top:12px;border:1px solid #333;background:#fff;border-radius:3px;cursor:pointer}
 button.main{background:#222;color:#fff;width:100%}
-.view{flex:1;min-width:0;max-height:calc(100vh - 32px);overflow:auto}
+.view{flex:1;min-width:0;overflow-x:auto}
+.pin .view{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.cap{font-size:12px;font-weight:700;margin:14px 0 6px;color:#444}
+#sheet .face+.face{box-shadow:inset 0 1px 0 #aaa}
 #zoom{width:auto;margin-left:6px}
 #info{margin:0 0 8px;font-size:12px;color:#555}
 #info.warn{color:#b00020;font-weight:700}
@@ -41,8 +44,9 @@ button.main{background:#222;color:#fff;width:100%}
 .guide .face+.face::after{right:0}
 @media print{
  body{display:block;padding:0;background:none}
- .panel,#info{display:none}
- .view{overflow:visible;max-height:none}
+ .panel,#info,#mainwrap,.cap,#zoomrow{display:none}
+ #sheet .face+.face{box-shadow:none}
+ .view{overflow:visible;max-height:none;position:static}
  #zw{width:auto!important;height:auto!important}
  .sheet{box-shadow:none;transform:none!important}
 }
@@ -89,7 +93,9 @@ button.main{background:#222;color:#fff;width:100%}
 </div>
 <div class="view">
  <p id="info"></p>
- <div style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select></div>
+ <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin"> プレビューを画面に固定する</label></div>
+ <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div id="zm"><div class="sheet" id="main"></div></div></div>
+ <div class="cap" id="cap2"></div>
  <div id="zw"><div class="sheet" id="sheet"></div></div>
 </div>
 <script>
@@ -139,18 +145,21 @@ function fits(c){
 function render(){
  const v=get();
  try{localStorage.setItem("osechi",JSON.stringify(v))}catch(e){}
- const s=$("sheet");
+ const s=$("sheet"),m=$("main");
  s.className="sheet"+(v.bl?" bl":"")+(v.guide?" guide":"");
- const f=face(v);s.innerHTML=v.mode==="2"?f+f:f;
+ m.className="sheet"+(v.bl?" bl":"");
+ const f=face(v);m.innerHTML=f;s.innerHTML=v.mode==="2"?f+f:f;
+ $("cap2").textContent=v.mode==="2"?"印刷イメージ（21×21cmの用紙に2面。半分に切って使います）":"印刷イメージ（21×10.5cmの用紙に1面）";
+ const sv=(a,b)=>{s.style.setProperty(a,b);m.style.setProperty(a,b)};
  $("pg").textContent=`@page{size:210mm ${v.mode==="2"?210:105}mm;margin:0}`;
- s.style.setProperty("--pv",v.padv+"mm");s.style.setProperty("--ph",v.padh+"mm");
- s.style.setProperty("--gm",v.gapm/100);s.style.setProperty("--mr",v.msgr/100);s.style.setProperty("--nr",v.notr/100);
+ sv("--pv",v.padv+"mm");sv("--ph",v.padh+"mm");
+ sv("--gm",v.gapm/100);sv("--mr",v.msgr/100);sv("--nr",v.notr/100);
  ["fsmax","padv","padh","gapm","msgr","notr"].forEach(k=>{$("o_"+k).textContent="　"+v[k]+(/m$|r$/.test(k)&&k!=="padv"&&k!=="padh"?"%":"mm")});
- s.style.transform="";
- const c=s.querySelector(".c"),fixed=v.fix==="fixed";let fs=parseFloat(v.fsmax),ok=false;
- if(fixed){s.style.setProperty("--fs",fs+"mm");ok=fits(c)}
+ m.style.transform="";
+ const c=m.querySelector(".c"),fixed=v.fix==="fixed";let fs=parseFloat(v.fsmax),ok=false;
+ if(fixed){sv("--fs",fs+"mm");ok=fits(c)}
  else for(;fs>=2.8;fs=Math.round((fs-0.1)*10)/10){
-  s.style.setProperty("--fs",fs+"mm");
+  sv("--fs",fs+"mm");
   if(fits(c)){ok=true;break}
  }
  const info=$("info");
@@ -166,18 +175,13 @@ $("print").onclick=()=>{
 };
 $("reset").onclick=()=>{if(confirm("入力内容をすべて基本設定に戻します。よろしいですか？")){localStorage.removeItem("osechi");load();render()}};
 function applyZoom(){
- const s=$("sheet"),zw=$("zw"),vw=document.querySelector(".view");
- s.style.transform="";
- const w=s.offsetWidth,h=s.offsetHeight;
- let k=1;
- if($("zoom").value==="auto"){
-  const ah=window.innerHeight-32-$("info").offsetHeight-40;
-  k=Math.max(.3,Math.min(1,(vw.clientWidth-4)/w,ah/h));
- }else k=parseFloat($("zoom").value);
- s.style.transformOrigin="0 0";
- s.style.transform=`scale(${k})`;
- zw.style.width=w*k+"px";zw.style.height=h*k+"px";
+ const vw=document.querySelector(".view"),pr=[["main","zm"],["sheet","zw"]];
+ pr.forEach(([a])=>{$(a).style.transform=""});
+ const w=$("main").offsetWidth;
+ const k=$("zoom").value==="auto"?Math.max(.3,Math.min(1,(vw.clientWidth-4)/w)):parseFloat($("zoom").value);
+ pr.forEach(([a,b])=>{const e=$(a),z=$(b);e.style.transformOrigin="0 0";e.style.transform=`scale(${k})`;z.style.width=e.offsetWidth*k+"px";z.style.height=e.offsetHeight*k+"px"});
 }
+$("pin").addEventListener("change",e=>{document.body.classList.toggle("pin",e.target.checked);applyZoom()});
 $("zoom").addEventListener("change",applyZoom);
 window.addEventListener("resize",applyZoom);
 load();render();
