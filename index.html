@@ -14,11 +14,14 @@ body{margin:0;padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex
 .panel input[type=text],.panel textarea,.panel select{width:100%;font:inherit;padding:5px;border:1px solid #bbb;border-radius:3px}
 .panel textarea{height:110px}
 .panel .chk{display:flex;gap:6px;align-items:center;font-weight:400;margin-top:8px}
+.panel .sub{margin:14px 0 0;padding-top:8px;border-top:1px dashed #ccc;font-size:12px;font-weight:700;color:#444}
 .row{display:flex;gap:6px}
 button{font:inherit;padding:8px 12px;margin-top:12px;border:1px solid #333;background:#fff;border-radius:3px;cursor:pointer}
 button.main{background:#222;color:#fff;width:100%}
-.view{flex:1;min-width:0;overflow-x:auto}
-.pin .view{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.view{flex:1;min-width:0}
+#stick{background:#e9e7e2;overflow:auto;padding:0 0 6px}
+.zwrap{overflow-x:auto}
+@media(min-width:760px){.pin #stick{position:sticky;top:0;z-index:5;max-height:100vh}}
 .cap{font-size:12px;font-weight:700;margin:14px 0 6px;color:#444}
 #sheet .face+.face{box-shadow:inset 0 1px 0 #aaa}
 #zoom{width:auto;margin-left:6px}
@@ -37,8 +40,15 @@ button.main{background:#222;color:#fff;width:100%}
 .bl .cell.d::before{content:"・"}
 .msg{height:100%;font-size:calc(var(--fs)*var(--mr,.72));line-height:2}
 .msg p,.note p{margin:0}
-.sig{align-self:flex-end;font-size:calc(var(--fs)*.78);line-height:2}
+.sig{align-self:flex-end;line-height:2}
+.sig.s1{font-size:calc(var(--fs)*var(--sr,.78))}
+.sig.s2{font-size:calc(var(--fs)*var(--dr,.78))}
 .note{height:100%;font-size:calc(var(--fs)*var(--nr,.52));line-height:1.9}
+/* 個別の間隔（負のマージンで共通の間隔を縮める／広げる） */
+.msg{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k1,1) - 1))}
+.sig.s1{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k2,1) - 1))}
+.sig.s2{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k3,1) - 1))}
+.note{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k4,1) - 1))}
 .guide .face+.face::before,.guide .face+.face::after{content:"";position:absolute;top:0;width:4mm;border-top:.2mm solid #000}
 .guide .face+.face::before{left:0}
 .guide .face+.face::after{right:0}
@@ -47,13 +57,15 @@ button.main{background:#222;color:#fff;width:100%}
  .panel,#info,#mainwrap,.cap,#zoomrow{display:none}
  #sheet .face+.face{box-shadow:none}
  .view{overflow:visible;max-height:none;position:static}
+ #stick{position:static!important;max-height:none!important;overflow:visible!important;background:none}
+ .zwrap{overflow:visible!important}
  #zw{width:auto!important;height:auto!important}
  .sheet{box-shadow:none;transform:none!important}
 }
 </style>
 <style id="pg"></style>
 </head>
-<body>
+<body class="pin">
 <div class="panel">
  <h1>おせちお品書き（試作）</h1>
  <label>店名</label><input type="text" id="shop">
@@ -80,23 +92,41 @@ button.main{background:#222;color:#fff;width:100%}
   <input type="range" id="padv" min="4" max="14" step="0.5">
   <label>左右の余白<span class="v" id="o_padh"></span></label>
   <input type="range" id="padh" min="4" max="20" step="0.5">
-  <label>列の間隔<span class="v" id="o_gapm"></span></label>
+  <label>列の間隔（全体の基準）<span class="v" id="o_gapm"></span></label>
   <input type="range" id="gapm" min="60" max="160" step="5">
-  <label>メッセージの大きさ（料理名に対する割合）<span class="v" id="o_msgr"></span></label>
+
+  <div class="sub">文字の大きさ（料理名に対する割合）</div>
+  <label>メッセージ<span class="v" id="o_msgr"></span></label>
   <input type="range" id="msgr" min="55" max="100" step="1">
-  <label>注意書きの大きさ（料理名に対する割合）<span class="v" id="o_notr"></span></label>
-  <input type="range" id="notr" min="40" max="80" step="1">
+  <label>署名（店名・役職・氏名）<span class="v" id="o_sigr"></span></label>
+  <input type="range" id="sigr" min="40" max="100" step="1">
+  <label>日付<span class="v" id="o_dater"></span></label>
+  <input type="range" id="dater" min="40" max="100" step="1">
+  <label>注意書き<span class="v" id="o_notr"></span></label>
+  <input type="range" id="notr" min="30" max="80" step="1">
+
+  <div class="sub">個別の間隔（基準の間隔に対する割合。小さいほど詰まる）</div>
+  <label>お品書き ⇔ メッセージ<span class="v" id="o_k1"></span></label>
+  <input type="range" id="k1" min="0" max="150" step="5">
+  <label>メッセージ ⇔ 署名<span class="v" id="o_k2"></span></label>
+  <input type="range" id="k2" min="0" max="150" step="5">
+  <label>署名 ⇔ 日付<span class="v" id="o_k3"></span></label>
+  <input type="range" id="k3" min="0" max="150" step="5">
+  <label>日付 ⇔ 注意書き<span class="v" id="o_k4"></span></label>
+  <input type="range" id="k4" min="0" max="150" step="5">
  </details>
  <button class="main" id="print">PDFとして保存</button>
  <p style="font-size:12px;color:#555;margin:6px 0 0">押すと印刷画面が開きます。送信先を「PDFに保存」、余白を「なし」、倍率を100%にしてください（Chrome・Edge推奨）。</p>
  <button id="reset">基本設定に戻す</button>
 </div>
 <div class="view">
+<div id="stick">
  <p id="info"></p>
- <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin"> プレビューを画面に固定する</label></div>
- <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div id="zm"><div class="sheet" id="main"></div></div></div>
+ <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin" checked> プレビューを画面に固定する</label></div>
+ <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div class="zwrap"><div id="zm"><div class="sheet" id="main"></div></div></div></div>
+</div>
  <div class="cap" id="cap2"></div>
- <div id="zw"><div class="sheet" id="sheet"></div></div>
+ <div class="zwrap"><div id="zw"><div class="sheet" id="sheet"></div></div></div>
 </div>
 <script>
 const DEF={
@@ -107,9 +137,12 @@ const DEF={
  note:"おせちは冷蔵にて保存のうえ、お受け取り後2日以内を目安に、できるだけお早めにお召し上がりください。",
  role:"",name:"〇〇",era:"令和",year:String(new Date().getFullYear()+1-2018),day:"元日",
  mode:"2",bl:true,guide:false,
- fix:"auto",fsmax:"4.6",padv:"8",padh:"10",gapm:"100",msgr:"72",notr:"52"
+ fix:"auto",fsmax:"4.6",padv:"8",padh:"10",gapm:"100",msgr:"72",notr:"52",
+ sigr:"78",dater:"78",k1:"100",k2:"100",k3:"100",k4:"100"
 };
 const IDS=Object.keys(DEF), $=id=>document.getElementById(id);
+const SLIDERS=["fsmax","padv","padh","gapm","msgr","sigr","dater","notr","k1","k2","k3","k4"];
+const UNIT={fsmax:"mm",padv:"mm",padh:"mm"};
 const kn=n=>{if(n==1)return"元";const d="〇一二三四五六七八九",t=Math.floor(n/10),o=n%10;return(t>1?d[t]:"")+(t?"十":"")+(o?d[o]:"")};
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const lines=s=>s.split("\n").map(x=>x.trim()).filter(Boolean);
@@ -134,7 +167,7 @@ function face(v){
  return `<div class="face"><div class="c">`+
   `<div class="t">${esc(v.shop)}　${esc(v.prod)}</div><div class="t h">おしながき</div>`+
   `<div class="dishes">${cols}</div><div class="msg">${ps(v.msg)}</div>`+
-  `<div class="sig">${esc(sig)}</div><div class="sig">${esc(date)}</div>`+
+  `<div class="sig s1">${esc(sig)}</div><div class="sig s2">${esc(date)}</div>`+
   (v.note.trim()?`<div class="note">※${ps(v.note)}</div>`:"")+`</div></div>`;
 }
 function fits(c){
@@ -154,7 +187,9 @@ function render(){
  $("pg").textContent=`@page{size:210mm ${v.mode==="2"?210:105}mm;margin:0}`;
  sv("--pv",v.padv+"mm");sv("--ph",v.padh+"mm");
  sv("--gm",v.gapm/100);sv("--mr",v.msgr/100);sv("--nr",v.notr/100);
- ["fsmax","padv","padh","gapm","msgr","notr"].forEach(k=>{$("o_"+k).textContent="　"+v[k]+(/m$|r$/.test(k)&&k!=="padv"&&k!=="padh"?"%":"mm")});
+ sv("--sr",v.sigr/100);sv("--dr",v.dater/100);
+ sv("--k1",v.k1/100);sv("--k2",v.k2/100);sv("--k3",v.k3/100);sv("--k4",v.k4/100);
+ SLIDERS.forEach(k=>{$("o_"+k).textContent="　"+v[k]+(UNIT[k]||"%")});
  m.style.transform="";
  const c=m.querySelector(".c"),fixed=v.fix==="fixed";let fs=parseFloat(v.fsmax),ok=false;
  if(fixed){sv("--fs",fs+"mm");ok=fits(c)}
@@ -165,7 +200,7 @@ function render(){
  const info=$("info");
  info.className=ok?"":"warn";
  info.textContent=ok?`料理名の文字サイズ：${fs.toFixed(1)}mm（約${(fs/0.3528).toFixed(1)}pt）${fixed?"で固定":"で自動調整"}`
-  :(fixed?"収まりません。文字サイズを小さくするか、余白・列の間隔を狭めてください。":"収まりません。余白や列の間隔を狭めるか、文章を減らしてください。");
+  :(fixed?"収まりません。文字サイズを小さくするか、余白・間隔を狭めてください。":"収まりません。余白や間隔を狭めるか、文章を減らしてください。");
  applyZoom();
 }
 IDS.forEach(k=>$(k).addEventListener("input",render));
