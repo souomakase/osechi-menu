@@ -23,11 +23,18 @@ button{font:inherit;padding:8px 12px;margin-top:12px;border:1px solid #333;backg
 button.main{background:#222;color:#fff;width:100%}
 .view{flex:1;min-width:0}
 #stick{background:#e9e7e2;overflow:auto;padding:0 0 6px}
-.zwrap{overflow-x:auto}
+.zwrap{overflow:visible}
 @media(min-width:760px){.pin #stick{position:sticky;top:0;z-index:5;max-height:100vh}}
 .cap{font-size:12px;font-weight:700;margin:10px 0 6px;color:#444}
 #sheet .face+.face{box-shadow:inset 0 1px 0 #aaa}
-#zoom{width:auto;margin-left:6px}
+#ctl{position:sticky;top:0;left:0;z-index:3;background:#e9e7e2;padding:6px 0 4px}
+#zoomrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;font-weight:700}
+#zoomrow button{margin:0;font-size:20px;font-weight:700;padding:6px 14px;min-width:48px}
+#zoomrow button.t2{font-size:14px}
+#zoomrow button.on{background:#222;color:#fff}
+#zs{width:180px;max-width:100%}
+#zv{min-width:5em;font-size:16px}
+#zoomrow select{width:auto;font:inherit;padding:5px}
 #info{margin:0 0 8px;font-size:12px;color:#555}
 #info.warn{color:#b00020;font-weight:700}
 .sheet{width:210mm;background:#fff;position:relative;box-shadow:0 1px 5px #0003}
@@ -58,7 +65,7 @@ button.main{background:#222;color:#fff;width:100%}
 .guide .face+.face::after{right:0}
 @media print{
  body{display:block;padding:0;background:none}
- .panel,#info,#mainwrap,.cap,#zoomrow{display:none}
+ .panel,#ctl,#info,#mainwrap,.cap,#zoomrow{display:none}
  #sheet .face+.face{box-shadow:none}
  .view{overflow:visible;max-height:none;position:static}
  #stick{position:static!important;max-height:none!important;overflow:visible!important;background:none;padding:0}
@@ -143,11 +150,26 @@ button.main{background:#222;color:#fff;width:100%}
 </div>
 <div class="view">
 <div id="stick">
+ <div id="ctl">
  <p id="info"></p>
- <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる（2枚とも表示）</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin" checked> プレビューを画面に固定する</label></div>
+ <div id="zoomrow">
+  <span>表示の大きさ</span>
+  <button id="zm_" title="小さく">－</button>
+  <input type="range" id="zs" min="30" max="250" step="5">
+  <button id="zp_" title="大きく">＋</button>
+  <span id="zv"></span>
+  <button class="t2" id="zfit">画面に合わせる</button>
+  <button class="t2" id="z100">100%（実寸）</button>
+  <button class="t2" id="z150">150%</button>
+  <button class="t2" id="z200">200%</button>
+  <select id="show"><option value="both">表示：2枚とも</option><option value="main">表示：1面のみ</option><option value="sheet">表示：印刷イメージのみ</option></select>
+  <label style="font-weight:400"><input type="checkbox" id="pin" checked> 画面に固定</label>
+ </div>
+ <div style="font-size:12px;font-weight:400;color:#555;margin-top:4px">拡大すると見切れますが、プレビュー内を上下左右にスクロールして確認できます（マウスのホイール・ドラッグ・スワイプ）。</div>
+ </div>
  <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div class="zwrap" id="zwm"><div id="zm"><div class="sheet" id="main"></div></div></div></div>
  <div class="cap" id="cap2"></div>
- <div class="zwrap"><div id="zw"><div class="sheet" id="sheet"></div></div></div>
+ <div class="zwrap" id="zwr"><div id="zw"><div class="sheet" id="sheet"></div></div></div>
 </div>
 </div>
 <script>
@@ -235,23 +257,38 @@ $("print").onclick=()=>{
  window.print();document.title=t;
 };
 $("reset").onclick=()=>{if(confirm("入力内容をすべて基本設定に戻します。よろしいですか？")){localStorage.removeItem("osechi");load();render()}};
+let zoomV="auto",lastK=1;
+try{zoomV=localStorage.getItem("osechi_zoom")||"auto";$("show").value=localStorage.getItem("osechi_show")||"both"}catch(e){}
+function setZoom(z){zoomV=z;try{localStorage.setItem("osechi_zoom",z)}catch(e){}applyZoom()}
 function applyZoom(){
- const vw=document.querySelector(".view"),st=$("stick"),pr=[["main","zm"],["sheet","zw"]];
+ const vw=document.querySelector(".view"),st=$("stick"),pr=[["main","zm"],["sheet","zw"]],sh=$("show").value;
+ const sm=sh!=="sheet",ss=sh!=="main";
+ $("mainwrap").style.display=sm?"":"none";$("cap2").style.display=$("zwr").style.display=ss?"":"none";
  pr.forEach(([a,b])=>{$(a).style.transform="";$(b).style.width="";$(b).style.height=""});
  const w=$("main").offsetWidth,hm=$("main").offsetHeight,hs=$("sheet").offsetHeight;
  let k;
- if($("zoom").value==="auto"){
+ if(zoomV==="auto"){
   k=(vw.clientWidth-4)/w;
   if($("pin").checked&&window.innerWidth>=760){
-   const over=st.scrollHeight-hm-hs; // 文字部分などの固定高さ
-   k=Math.min(k,(window.innerHeight-over-10)/(hm+hs));
+   const over=st.scrollHeight-(sm?hm:0)-(ss?hs:0);
+   k=Math.min(k,(window.innerHeight-over-10)/((sm?hm:0)+(ss?hs:0)));
   }
-  k=Math.max(.25,Math.min(1,k));
- }else k=parseFloat($("zoom").value);
+  k=Math.max(.25,Math.min(2.5,k));
+ }else k=Math.max(.3,Math.min(2.5,parseFloat(zoomV)/100));
+ lastK=k;
  pr.forEach(([a,b])=>{const e=$(a),z=$(b);e.style.transformOrigin="0 0";e.style.transform=`scale(${k})`;z.style.width=e.offsetWidth*k+"px";z.style.height=e.offsetHeight*k+"px"});
+ const pc=Math.round(k*100);
+ $("zs").value=pc;$("zv").textContent=pc+"%"+(zoomV==="auto"?"（自動）":"");
+ $("zfit").classList.toggle("on",zoomV==="auto");
+ [100,150,200].forEach(n=>$("z"+n).classList.toggle("on",zoomV!=="auto"&&pc===n));
 }
+$("zs").addEventListener("input",e=>setZoom(e.target.value));
+$("zm_").onclick=()=>setZoom(Math.max(30,Math.round(lastK*100/10)*10-10));
+$("zp_").onclick=()=>setZoom(Math.min(250,Math.round(lastK*100/10)*10+10));
+$("zfit").onclick=()=>setZoom("auto");
+[100,150,200].forEach(n=>$("z"+n).onclick=()=>setZoom(n));
+$("show").addEventListener("change",e=>{try{localStorage.setItem("osechi_show",e.target.value)}catch(_){}applyZoom()});
 $("pin").addEventListener("change",e=>{document.body.classList.toggle("pin",e.target.checked);applyZoom()});
-$("zoom").addEventListener("change",applyZoom);
 window.addEventListener("resize",applyZoom);
 load();render();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(render);
