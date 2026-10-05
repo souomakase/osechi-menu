@@ -4,15 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>おせちお品書き（試作 Template B）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200..900&display=swap">
 <style>
 :root{--serif:"Noto Serif JP","Shippori Mincho","Yu Mincho","Hiragino Mincho ProN","MS PMincho",serif}
 *{box-sizing:border-box}
 body{margin:0;padding:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;background:#e9e7e2;color:#222;font:14px/1.6 "Hiragino Sans","Yu Gothic",system-ui,sans-serif}
 .panel{width:340px;flex:none;background:#fff;padding:14px 16px 18px;border-radius:6px}
+@media(min-width:760px){.panel{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain}}
 .panel h1{font-size:16px;margin:0 0 4px}
 .panel label{display:block;margin-top:10px;font-size:12px;font-weight:700}
 .panel input[type=text],.panel textarea,.panel select{width:100%;font:inherit;padding:5px;border:1px solid #bbb;border-radius:3px}
 .panel textarea{height:110px}
+.panel input[type=range]{width:100%}
 .panel .chk{display:flex;gap:6px;align-items:center;font-weight:400;margin-top:8px}
 .panel .sub{margin:14px 0 0;padding-top:8px;border-top:1px dashed #ccc;font-size:12px;font-weight:700;color:#444}
 .row{display:flex;gap:6px}
@@ -22,7 +25,7 @@ button.main{background:#222;color:#fff;width:100%}
 #stick{background:#e9e7e2;overflow:auto;padding:0 0 6px}
 .zwrap{overflow-x:auto}
 @media(min-width:760px){.pin #stick{position:sticky;top:0;z-index:5;max-height:100vh}}
-.cap{font-size:12px;font-weight:700;margin:14px 0 6px;color:#444}
+.cap{font-size:12px;font-weight:700;margin:10px 0 6px;color:#444}
 #sheet .face+.face{box-shadow:inset 0 1px 0 #aaa}
 #zoom{width:auto;margin-left:6px}
 #info{margin:0 0 8px;font-size:12px;color:#555}
@@ -33,18 +36,19 @@ button.main{background:#222;color:#fff;width:100%}
 .c>*{flex:none}
 .t,.h,.msg,.sig,.note,.cell{writing-mode:vertical-rl;line-break:strict}
 .t{align-self:flex-start;font-size:calc(var(--fs)*1.05);line-height:1.8;letter-spacing:.08em}
-.h{align-self:flex-start;font-size:calc(var(--fs)*.85);margin-top:calc(var(--fs)*3);line-height:1.8;letter-spacing:.2em}
+.t .ws{font-weight:var(--w-shop,400)}
+.t .wp{font-weight:var(--w-prod,400)}
+.h{align-self:flex-start;font-size:calc(var(--fs)*.85);margin-top:calc(var(--fs)*3);line-height:1.8;letter-spacing:.2em;font-weight:var(--w-title,400)}
 .dishes{display:flex;flex-direction:row-reverse;height:100%;gap:calc(var(--fs)*.3*var(--gm,1))}
 .col{display:flex;flex-direction:column;height:100%}
-.cell{height:50%;white-space:nowrap;font-size:var(--fs);line-height:1.75}
+.cell{height:50%;white-space:nowrap;font-size:var(--fs);line-height:1.75;font-weight:var(--w-dish,400)}
 .bl .cell.d::before{content:"・"}
-.msg{height:100%;font-size:calc(var(--fs)*var(--mr,.72));line-height:2}
+.msg{height:100%;font-size:calc(var(--fs)*var(--mr,.72));line-height:2;font-weight:var(--w-msg,400)}
 .msg p,.note p{margin:0}
 .sig{align-self:flex-end;line-height:2}
-.sig.s1{font-size:calc(var(--fs)*var(--sr,.78))}
-.sig.s2{font-size:calc(var(--fs)*var(--dr,.78))}
-.note{height:100%;font-size:calc(var(--fs)*var(--nr,.52));line-height:1.9}
-/* 個別の間隔（負のマージンで共通の間隔を縮める／広げる） */
+.sig.s1{font-size:calc(var(--fs)*var(--sr,.78));font-weight:var(--w-sig,400)}
+.sig.s2{font-size:calc(var(--fs)*var(--dr,.78));font-weight:var(--w-date,400)}
+.note{height:100%;font-size:calc(var(--fs)*var(--nr,.52));line-height:1.9;font-weight:var(--w-note,400)}
 .msg{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k1,1) - 1))}
 .sig.s1{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k2,1) - 1))}
 .sig.s2{margin-right:calc(var(--fs)*1.6*var(--gm,1)*(var(--k3,1) - 1))}
@@ -57,7 +61,7 @@ button.main{background:#222;color:#fff;width:100%}
  .panel,#info,#mainwrap,.cap,#zoomrow{display:none}
  #sheet .face+.face{box-shadow:none}
  .view{overflow:visible;max-height:none;position:static}
- #stick{position:static!important;max-height:none!important;overflow:visible!important;background:none}
+ #stick{position:static!important;max-height:none!important;overflow:visible!important;background:none;padding:0}
  .zwrap{overflow:visible!important}
  #zw{width:auto!important;height:auto!important}
  .sheet{box-shadow:none;transform:none!important}
@@ -114,6 +118,24 @@ button.main{background:#222;color:#fff;width:100%}
   <input type="range" id="k3" min="0" max="150" step="5">
   <label>日付 ⇔ 注意書き<span class="v" id="o_k4"></span></label>
   <input type="range" id="k4" min="0" max="150" step="5">
+
+  <div class="sub">文字の太さ（100=細い ／ 400=標準 ／ 700=太字 ／ 900=最も太い。同じ数字なら同じ太さ）</div>
+  <label>題名（おしながき）<span class="v" id="o_wtitle"></span></label>
+  <input type="range" id="wtitle" min="100" max="900" step="100">
+  <label>店名<span class="v" id="o_wshop"></span></label>
+  <input type="range" id="wshop" min="100" max="900" step="100">
+  <label>品名（商品名）<span class="v" id="o_wprod"></span></label>
+  <input type="range" id="wprod" min="100" max="900" step="100">
+  <label>料理名<span class="v" id="o_wdish"></span></label>
+  <input type="range" id="wdish" min="100" max="900" step="100">
+  <label>メッセージ<span class="v" id="o_wmsg"></span></label>
+  <input type="range" id="wmsg" min="100" max="900" step="100">
+  <label>署名（店名・役職・氏名）<span class="v" id="o_wsig"></span></label>
+  <input type="range" id="wsig" min="100" max="900" step="100">
+  <label>日付<span class="v" id="o_wdate"></span></label>
+  <input type="range" id="wdate" min="100" max="900" step="100">
+  <label>注意書き<span class="v" id="o_wnote"></span></label>
+  <input type="range" id="wnote" min="100" max="900" step="100">
  </details>
  <button class="main" id="print">PDFとして保存</button>
  <p style="font-size:12px;color:#555;margin:6px 0 0">押すと印刷画面が開きます。送信先を「PDFに保存」、余白を「なし」、倍率を100%にしてください（Chrome・Edge推奨）。</p>
@@ -122,11 +144,11 @@ button.main{background:#222;color:#fff;width:100%}
 <div class="view">
 <div id="stick">
  <p id="info"></p>
- <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin" checked> プレビューを画面に固定する</label></div>
- <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div class="zwrap"><div id="zm"><div class="sheet" id="main"></div></div></div></div>
-</div>
+ <div id="zoomrow" style="font-size:12px;margin-bottom:6px">表示の大きさ<select id="zoom"><option value="auto">画面に合わせる（2枚とも表示）</option><option value="1">100%（実寸）</option><option value="0.75">75%</option><option value="0.5">50%</option></select><label style="margin-left:12px"><input type="checkbox" id="pin" checked> プレビューを画面に固定する</label></div>
+ <div id="mainwrap"><div class="cap">プレビュー（1面）</div><div class="zwrap" id="zwm"><div id="zm"><div class="sheet" id="main"></div></div></div></div>
  <div class="cap" id="cap2"></div>
  <div class="zwrap"><div id="zw"><div class="sheet" id="sheet"></div></div></div>
+</div>
 </div>
 <script>
 const DEF={
@@ -138,11 +160,14 @@ const DEF={
  role:"",name:"〇〇",era:"令和",year:String(new Date().getFullYear()+1-2018),day:"元日",
  mode:"2",bl:true,guide:false,
  fix:"auto",fsmax:"4.6",padv:"8",padh:"10",gapm:"100",msgr:"72",notr:"52",
- sigr:"78",dater:"78",k1:"100",k2:"100",k3:"100",k4:"100"
+ sigr:"78",dater:"78",k1:"100",k2:"100",k3:"100",k4:"100",
+ wtitle:"400",wshop:"400",wprod:"400",wdish:"400",wmsg:"400",wsig:"400",wdate:"400",wnote:"400"
 };
 const IDS=Object.keys(DEF), $=id=>document.getElementById(id);
-const SLIDERS=["fsmax","padv","padh","gapm","msgr","sigr","dater","notr","k1","k2","k3","k4"];
-const UNIT={fsmax:"mm",padv:"mm",padh:"mm"};
+const WS=["wtitle","wshop","wprod","wdish","wmsg","wsig","wdate","wnote"];
+const SLIDERS=["fsmax","padv","padh","gapm","msgr","sigr","dater","notr","k1","k2","k3","k4",...WS];
+const UNIT={fsmax:"mm",padv:"mm",padh:"mm"};WS.forEach(k=>UNIT[k]="");
+const WVAR={wtitle:"--w-title",wshop:"--w-shop",wprod:"--w-prod",wdish:"--w-dish",wmsg:"--w-msg",wsig:"--w-sig",wdate:"--w-date",wnote:"--w-note"};
 const kn=n=>{if(n==1)return"元";const d="〇一二三四五六七八九",t=Math.floor(n/10),o=n%10;return(t>1?d[t]:"")+(t?"十":"")+(o?d[o]:"")};
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const lines=s=>s.split("\n").map(x=>x.trim()).filter(Boolean);
@@ -165,7 +190,7 @@ function face(v){
  const date=`${v.era}${kn(+v.year)}年　${v.day}`;
  const ps=a=>lines(a).map(x=>`<p>${esc(x)}</p>`).join("");
  return `<div class="face"><div class="c">`+
-  `<div class="t">${esc(v.shop)}　${esc(v.prod)}</div><div class="t h">おしながき</div>`+
+  `<div class="t"><span class="ws">${esc(v.shop)}</span>　<span class="wp">${esc(v.prod)}</span></div><div class="t h">おしながき</div>`+
   `<div class="dishes">${cols}</div><div class="msg">${ps(v.msg)}</div>`+
   `<div class="sig s1">${esc(sig)}</div><div class="sig s2">${esc(date)}</div>`+
   (v.note.trim()?`<div class="note">※${ps(v.note)}</div>`:"")+`</div></div>`;
@@ -189,7 +214,8 @@ function render(){
  sv("--gm",v.gapm/100);sv("--mr",v.msgr/100);sv("--nr",v.notr/100);
  sv("--sr",v.sigr/100);sv("--dr",v.dater/100);
  sv("--k1",v.k1/100);sv("--k2",v.k2/100);sv("--k3",v.k3/100);sv("--k4",v.k4/100);
- SLIDERS.forEach(k=>{$("o_"+k).textContent="　"+v[k]+(UNIT[k]||"%")});
+ WS.forEach(k=>sv(WVAR[k],v[k]));
+ SLIDERS.forEach(k=>{$("o_"+k).textContent="　"+v[k]+(UNIT[k]===undefined?"%":UNIT[k])});
  m.style.transform="";
  const c=m.querySelector(".c"),fixed=v.fix==="fixed";let fs=parseFloat(v.fsmax),ok=false;
  if(fixed){sv("--fs",fs+"mm");ok=fits(c)}
@@ -210,16 +236,25 @@ $("print").onclick=()=>{
 };
 $("reset").onclick=()=>{if(confirm("入力内容をすべて基本設定に戻します。よろしいですか？")){localStorage.removeItem("osechi");load();render()}};
 function applyZoom(){
- const vw=document.querySelector(".view"),pr=[["main","zm"],["sheet","zw"]];
- pr.forEach(([a])=>{$(a).style.transform=""});
- const w=$("main").offsetWidth;
- const k=$("zoom").value==="auto"?Math.max(.3,Math.min(1,(vw.clientWidth-4)/w)):parseFloat($("zoom").value);
+ const vw=document.querySelector(".view"),st=$("stick"),pr=[["main","zm"],["sheet","zw"]];
+ pr.forEach(([a,b])=>{$(a).style.transform="";$(b).style.width="";$(b).style.height=""});
+ const w=$("main").offsetWidth,hm=$("main").offsetHeight,hs=$("sheet").offsetHeight;
+ let k;
+ if($("zoom").value==="auto"){
+  k=(vw.clientWidth-4)/w;
+  if($("pin").checked&&window.innerWidth>=760){
+   const over=st.scrollHeight-hm-hs; // 文字部分などの固定高さ
+   k=Math.min(k,(window.innerHeight-over-10)/(hm+hs));
+  }
+  k=Math.max(.25,Math.min(1,k));
+ }else k=parseFloat($("zoom").value);
  pr.forEach(([a,b])=>{const e=$(a),z=$(b);e.style.transformOrigin="0 0";e.style.transform=`scale(${k})`;z.style.width=e.offsetWidth*k+"px";z.style.height=e.offsetHeight*k+"px"});
 }
 $("pin").addEventListener("change",e=>{document.body.classList.toggle("pin",e.target.checked);applyZoom()});
 $("zoom").addEventListener("change",applyZoom);
 window.addEventListener("resize",applyZoom);
 load();render();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(render);
 </script>
 </body>
 </html>
