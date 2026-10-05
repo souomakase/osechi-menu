@@ -32,6 +32,11 @@ button.main{background:#222;color:#fff;width:100%}
 #zoomrow button{margin:0;font-size:20px;font-weight:700;padding:6px 14px;min-width:48px}
 #zoomrow button.t2{font-size:14px}
 #zoomrow button.on{background:#222;color:#fff}
+#stick::-webkit-scrollbar,.panel::-webkit-scrollbar{width:18px;height:18px}
+#stick::-webkit-scrollbar-track,.panel::-webkit-scrollbar-track{background:#cfcbc3}
+#stick::-webkit-scrollbar-thumb,.panel::-webkit-scrollbar-thumb{background:#666;border-radius:9px;border:3px solid #cfcbc3}
+#stick::-webkit-scrollbar-thumb:hover,.panel::-webkit-scrollbar-thumb:hover{background:#333}
+#stick,.panel{scrollbar-width:auto;scrollbar-color:#666 #cfcbc3}
 #zs{width:180px;max-width:100%}
 #zv{min-width:5em;font-size:16px}
 #zoomrow select{width:auto;font:inherit;padding:5px}
@@ -162,6 +167,8 @@ button.main{background:#222;color:#fff;width:100%}
   <button class="t2" id="z100">100%（実寸）</button>
   <button class="t2" id="z150">150%</button>
   <button class="t2" id="z200">200%</button>
+  <span>移動</span>
+  <button id="mL" title="左へ">◀</button><button id="mU" title="上へ">▲</button><button id="mD" title="下へ">▼</button><button id="mR" title="右へ">▶</button>
   <select id="show"><option value="both">表示：2枚とも</option><option value="main">表示：1面のみ</option><option value="sheet">表示：印刷イメージのみ</option></select>
   <label style="font-weight:400"><input type="checkbox" id="pin" checked> 画面に固定</label>
  </div>
@@ -287,6 +294,7 @@ $("zm_").onclick=()=>setZoom(Math.max(30,Math.round(lastK*100/10)*10-10));
 $("zp_").onclick=()=>setZoom(Math.min(250,Math.round(lastK*100/10)*10+10));
 $("zfit").onclick=()=>setZoom("auto");
 [100,150,200].forEach(n=>$("z"+n).onclick=()=>setZoom(n));
+[["mL",-1,0],["mR",1,0],["mU",0,-1],["mD",0,1]].forEach(([id,x,y])=>$(id).onclick=()=>$("stick").scrollBy({left:x*200,top:y*200,behavior:"smooth"}));
 $("show").addEventListener("change",e=>{try{localStorage.setItem("osechi_show",e.target.value)}catch(_){}applyZoom()});
 $("pin").addEventListener("change",e=>{document.body.classList.toggle("pin",e.target.checked);applyZoom()});
 window.addEventListener("resize",applyZoom);
